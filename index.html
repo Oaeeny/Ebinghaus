@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="艾宾浩斯">
+<title>艾宾浩斯复习助手 - 公考版</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    min-height: 100vh;
+    padding-bottom: 80px;
+    padding-top: env(safe-area-inset-top);
+  }
+  .header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 24px 20px 30px;
+    border-radius: 0 0 24px 24px;
+  }
+  .header .date { font-size: 14px; opacity: 0.85; margin-bottom: 4px; }
+  .header h1 { font-size: 22px; font-weight: 600; margin-bottom: 12px; }
+  .header .stats {
+    display: flex;
+    gap: 12px;
+  }
+  .header .stat {
+    background: rgba(255,255,255,0.2);
+    padding: 8px 10px;
+    border-radius: 12px;
+    flex: 1;
+    backdrop-filter: blur(10px);
+    text-align: center;
+  }
+  .header .stat-num { font-size: 18px; font-weight: 600; }
+  .header .stat-label { font-size: 11px; opacity: 0.9; margin-top: 2px; }
+
+  .category-progress {
+    display: flex;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .cat-progress-item {
+    flex: 1;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 8px 10px;
+  }
+  .cat-progress-label {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-bottom: 6px;
+  }
+  .cat-progress-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .cat-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+
+  /* 分类切换 */
+  .category-switch {
+    display: flex;
+    gap: 8px;
+    margin: 16px 16px 0;
+    background: white;
+    border-radius: 12px;
+    padding: 4px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  .cat-btn {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    color: #86868b;
+    transition: all 0.2s;
+  }
+  .cat-btn.active-xingce {
+    background: linear-gradient(135deg, #007aff, #5ac8fa);
+    color: white;
+  }
+  .cat-btn.active-shenlun {
+    background: linear-gradient(135deg, #ff6b6b, #ffa502);
+    color: white;
+  }
+  .cat-btn.active-all {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+  }
+
+  .section {
+    margin: 16px;
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title .icon { font-size: 18px; }
+  .section-title .tag {
+    margin-left: auto;
+    font-size: 12px;
+    background: #f0f0f5;
+    color: #666;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-weight: 400;
+  }
+
+  .task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .task-item:last-child { border-bottom: none; }
+  .checkbox {
+    width: 22px;
+    height: 22px;
+    border: 2px solid #d2d2d7;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 2px;
+  }
+  .checkbox.done {
+    background: #34c759;
+    border-color: #34c759;
+  }
+  .checkbox.done::after {
+    content: '✓';
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+  }
+  .task-content { flex: 1; min-width: 0; }
+  .task-title {
+    font-size: 15px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+  }
+  .task-item.done .task-title {
+    text-decoration: line-through;
+    color: #86868b;
+  }
+  .task-meta {
+    font-size: 12px;
+    color: #86868b;
+  }
+  .task-meta .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+  }
+  .badge-new { background: #e8f5e9; color: #34c759; }
+  .badge-review { background: #fff4e5; color: #ff9500; }
+  .badge-d4 { background: #eaf4ff; color: #007aff; }
+  .badge-d7 { background: #f0eaff; color: #5856d6; }
+  .badge-d15 { background: #fbeaff; color: #af52de; }
+  .badge-d30 { background: #ffeaea; color: #ff3b30; }
+  .badge-d60 { background: #f0f5ff; color: #3b82f6; }
+  .badge-cat-xingce { background: #e8f4ff; color: #007aff; }
+  .badge-cat-shenlun { background: #fff0e8; color: #ff6b00; }
+  .badge-module-zzll { background: #ffefef; color: #e74c3c; }
+  .badge-module-yuyan { background: #e8f0ff; color: #3498db; }
+  .badge-module-shuliang { background: #fff4e5; color: #f39c12; }
+  .badge-module-panduan { background: #e8fff0; color: #27ae60; }
+  .badge-module-ziliao { background: #f0eaff; color: #9b59b6; }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .input-row input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid #e5e5ea;
+    border-radius: 10px;
+    font-size: 14px;
+    background: #f9f9fb;
+    outline: none;
+  }
+  .input-row input:focus { border-color: #667eea; background: white; }
+  .btn {
+    padding: 10px 18px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.96); }
+
+  .cat-selector {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .cat-selector .cat-option {
+    flex: 1;
+    padding: 8px;
+    text-align: center;
+    border: 1.5px solid #e5e5ea;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #86868b;
+  }
+  .cat-selector .cat-option.selected-xingce {
+    border-color: #007aff;
+    background: #e8f4ff;
+    color: #007aff;
+  }
+  .cat-selector .cat-option.selected-shenlun {
+    border-color: #ff6b00;
+    background: #fff0e8;
+    color: #ff6b00;
+  }
+
+  /* 模块选择（行测子项） */
+  .module-selector {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .module-option {
+    padding: 8px 4px;
+    text-align: center;
+    border: 1.5px solid #e5e5ea;
+    border-radius: 8px;
+    font-size: 11px;
+    cursor: pointer;
+    color: #86868b;
+    line-height: 1.3;
+  }
+  .module-option.selected {
+    border-color: #007aff;
+    background: #e8f4ff;
+    color: #007aff;
+    font-weight: 500;
+  }
+  .module-option .module-icon {
+    font-size: 16px;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 30px 20px;
+    color: #86868b;
+    font-size: 14px;
+  }
+  .empty .emoji { font-size: 36px; margin-bottom: 8px; }
+
+  .tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid #e5e5ea;
+    display: flex;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0 8px;
+    color: #86868b;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .tab-item.active { color: #667eea; }
+  .tab-icon { font-size: 22px; margin-bottom: 2px; }
+  .tab-label { font-size: 10px; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Plan page */
+  .month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px 12px;
+  }
+  .month-nav button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #f0f0f5;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .month-title { font-size: 16px; font-weight: 600; }
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    padding: 0 12px;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 13px;
+    position: relative;
+    cursor: pointer;
+  }
+  .cal-day.weekday { font-size: 11px; color: #86868b; }
+  .cal-day.empty { visibility: hidden; }
+  .cal-day.today {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    font-weight: 600;
+  }
+  .cal-day .cat-dots {
+    display: flex;
+    gap: 2px;
+    position: absolute;
+    bottom: 3px;
+  }
+  .cal-day .cat-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+  }
+  .dot-xingce { background: #007aff; }
+  .dot-shenlun { background: #ff6b00; }
+  .cal-day.future { color: #c7c7cc; }
+
+  /* Stats page */
+  .chart-container {
+    padding: 20px 16px;
+  }
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 150px;
+    padding: 0 4px;
+  }
+  .bar {
+    flex: 1;
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .bar .bar-xingce {
+    background: linear-gradient(180deg, #007aff, #5ac8fa);
+    border-radius: 4px 4px 0 0;
+  }
+  .bar .bar-shenlun {
+    background: linear-gradient(180deg, #ff6b6b, #ffa502);
+    border-radius: 0;
+    margin-top: 2px;
+  }
+  .bar-labels {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+    padding: 0 4px;
+  }
+  .bar-labels div {
+    flex: 1;
+    text-align: center;
+    font-size: 10px;
+    color: #86868b;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  .stat-card .num {
+    font-size: 24px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-card .num-xingce {
+    background: linear-gradient(135deg, #007aff, #5ac8fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-card .num-shenlun {
+    background: linear-gradient(135deg, #ff6b6b, #ffa502);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-card .label { font-size: 12px; color: #86868b; margin-top: 4px; }
+
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #666;
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+  }
+
+  /* 模块统计 */
+  .module-stats {
+    margin-top: 8px;
+  }
+  .module-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+  }
+  .module-stat-icon { font-size: 20px; width: 28px; text-align: center; }
+  .module-stat-info { flex: 1; }
+  .module-stat-name { font-size: 13px; margin-bottom: 4px; }
+  .module-stat-bar {
+    height: 6px;
+    background: #f0f0f5;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .module-stat-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+  .module-stat-count {
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    min-width: 30px;
+    text-align: right;
+  }
+
+  /* Settings page */
+  .setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .setting-item:last-child { border-bottom: none; }
+  .setting-item .danger { color: #ff3b30; }
+  .setting-item input[type="file"] { display: none; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 340px;
+    padding: 20px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 12px; }
+  .modal .modal-close {
+    margin-top: 12px;
+    width: 100%;
+    padding: 12px;
+    background: #f0f0f5;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .modal .modal-btn {
+    margin-top: 8px;
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    color: white;
+  }
+  .modal-section-title {
+    font-size: 13px;
+    color: #666;
+    margin: 12px 0 6px;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<!-- 今日页 -->
+<div class="page active" id="page-today">
+  <div class="header">
+    <div class="date" id="today-date">11月2日 周一</div>
+    <h1>今日复习计划</h1>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num" id="stat-total">0</div>
+        <div class="stat-label">总任务</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="stat-done">0</div>
+        <div class="stat-label">已完成</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="stat-percent">0%</div>
+        <div class="stat-label">完成率</div>
+      </div>
+    </div>
+    <div class="category-progress">
+      <div class="cat-progress-item">
+        <div class="cat-progress-label">📘 行测 <span id="xingce-percent">0%</span></div>
+        <div class="cat-progress-bar">
+          <div class="cat-progress-fill" id="xingce-fill" style="width:0%;background:rgba(255,255,255,0.9);"></div>
+        </div>
+      </div>
+      <div class="cat-progress-item">
+        <div class="cat-progress-label">📕 申论 <span id="shenlun-percent">0%</span></div>
+        <div class="cat-progress-bar">
+          <div class="cat-progress-fill" id="shenlun-fill" style="width:0%;background:rgba(255,255,255,0.9);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分类筛选 -->
+  <div class="category-switch" id="cat-filter">
+    <div class="cat-btn active-all" data-cat="all" onclick="setFilterCat('all')">全部</div>
+    <div class="cat-btn" data-cat="xingce" onclick="setFilterCat('xingce')">📘 行测</div>
+    <div class="cat-btn" data-cat="shenlun" onclick="setFilterCat('shenlun')">📕 申论</div>
+  </div>
+
+  <!-- 新学内容 -->
+  <div class="section">
+    <div class="section-title">
+      <span class="icon">📚</span>
+      <span>今日新学</span>
+      <span class="tag" id="new-count-tag">0项</span>
+    </div>
+    <div id="new-tasks"></div>
+    <div class="input-row">
+      <input type="text" id="new-task-input" placeholder="输入今天学习的内容...">
+      <button class="btn" onclick="showAddModal()">添加</button>
+    </div>
+  </div>
+
+  <!-- 复习内容 -->
+  <div class="section">
+    <div class="section-title">
+      <span class="icon">🔄</span>
+      <span>今日复习</span>
+      <span class="tag" id="review-count-tag">0项</span>
+    </div>
+    <div id="review-tasks"></div>
+  </div>
+</div>
+
+<!-- 计划页 -->
+<div class="page" id="page-plan">
+  <div class="header">
+    <div class="date">艾宾浩斯复习计划</div>
+    <h1>90天复习表</h1>
+  </div>
+  <div class="category-switch" style="margin-top: 16px;">
+    <div class="cat-btn active-all" data-cat="all" onclick="setPlanCat('all')">全部</div>
+    <div class="cat-btn" data-cat="xingce" onclick="setPlanCat('xingce')">📘 行测</div>
+    <div class="cat-btn" data-cat="shenlun" onclick="setPlanCat('shenlun')">📕 申论</div>
+  </div>
+  <div class="section" style="margin-top: 16px;">
+    <div class="month-nav">
+      <button onclick="changeMonth(-1)">‹</button>
+      <div class="month-title" id="month-title">2026年11月</div>
+      <button onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="calendar" id="calendar"></div>
+  </div>
+  <div class="section" id="day-detail-section" style="display:none;">
+    <div class="section-title">
+      <span class="icon">📋</span>
+      <span id="detail-date">当天详情</span>
+    </div>
+    <div id="day-detail-content"></div>
+  </div>
+</div>
+
+<!-- 统计页 -->
+<div class="page" id="page-stats">
+  <div class="header">
+    <div class="date">学习数据</div>
+    <h1>学习统计</h1>
+  </div>
+  <div class="section" style="margin-top: -10px;">
+    <div class="section-title">
+      <span class="icon">📊</span>
+      <span>近7天完成情况</span>
+    </div>
+    <div class="chart-container">
+      <div class="bar-chart" id="bar-chart"></div>
+      <div class="bar-labels" id="bar-labels"></div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#007aff"></div>行测</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ff6b00"></div>申论</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">
+      <span class="icon">📘</span>
+      <span>行测各模块</span>
+    </div>
+    <div class="module-stats" id="module-stats"></div>
+  </div>
+
+  <div class="stats-grid" style="padding: 0 16px;">
+    <div class="stat-card">
+      <div class="num num-xingce" id="xingce-learned">0</div>
+      <div class="label">行测 · 累计知识点</div>
+    </div>
+    <div class="stat-card">
+      <div class="num num-shenlun" id="shenlun-learned">0</div>
+      <div class="label">申论 · 累计知识点</div>
+    </div>
+    <div class="stat-card">
+      <div class="num num-xingce" id="xingce-review">0</div>
+      <div class="label">行测 · 复习次数</div>
+    </div>
+    <div class="stat-card">
+      <div class="num num-shenlun" id="shenlun-review">0</div>
+      <div class="label">申论 · 复习次数</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="streak-days">0</div>
+      <div class="label">连续学习天数</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="total-days">0</div>
+      <div class="label">总学习天数</div>
+    </div>
+  </div>
+</div>
+
+<!-- 设置页 -->
+<div class="page" id="page-settings">
+  <div class="header">
+    <div class="date">个性化</div>
+    <h1>设置</h1>
+  </div>
+  <div class="section" style="margin-top: -10px;">
+    <div class="setting-item">
+      <span>起始日期</span>
+      <span id="setting-startdate">2026-11-02</span>
+    </div>
+    <div class="setting-item">
+      <span>艾宾浩斯节点</span>
+      <span style="font-size:12px;color:#86868b;">1/2/4/7/15/30/60天</span>
+    </div>
+    <div class="setting-item">
+      <span>行测模块</span>
+      <span style="font-size:12px;color:#86868b;">政治·言语·数量·判断·资料</span>
+    </div>
+  </div>
+  <div class="section">
+    <div class="setting-item" onclick="exportData()">
+      <span>导出数据备份</span>
+      <span>→</span>
+    </div>
+    <div class="setting-item" onclick="document.getElementById('import-file').click()">
+      <span>导入数据</span>
+      <span>←</span>
+    </div>
+    <input type="file" id="import-file" accept=".json" onchange="importData(event)">
+    <div class="setting-item danger" onclick="clearAllData()">
+      <span>清空所有数据</span>
+      <span>⚠️</span>
+    </div>
+  </div>
+  <div class="section">
+    <div style="text-align:center;color:#86868b;font-size:12px;padding:8px 0;line-height:1.8;">
+      艾宾浩斯复习助手 · 公考定制版<br>
+      v3.0 · 行测5模块细分
+    </div>
+  </div>
+  <div class="section">
+    <div style="text-align:center;color:#86868b;font-size:12px;padding:8px 0;line-height:1.8;">
+      💡 使用技巧<br>
+      点「分享」→「添加到主屏幕」<br>
+      即可像App一样使用
+    </div>
+  </div>
+</div>
+
+<!-- 底部导航 -->
+<div class="tab-bar">
+  <div class="tab-item active" onclick="switchTab('today')">
+    <div class="tab-icon">📅</div>
+    <div class="tab-label">今日</div>
+  </div>
+  <div class="tab-item" onclick="switchTab('plan')">
+    <div class="tab-icon">🗓️</div>
+    <div class="tab-label">计划</div>
+  </div>
+  <div class="tab-item" onclick="switchTab('stats')">
+    <div class="tab-icon">📊</div>
+    <div class="tab-label">统计</div>
+  </div>
+  <div class="tab-item" onclick="switchTab('settings')">
+    <div class="tab-icon">⚙️</div>
+    <div class="tab-label">设置</div>
+  </div>
+</div>
+
+<!-- 添加任务弹窗 -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <h3>添加新学内容</h3>
+    <input type="text" id="modal-task-input" placeholder="输入知识点名称..." style="width:100%;padding:12px;border:1px solid #e5e5ea;border-radius:10px;font-size:15px;margin-bottom:4px;">
+    
+    <div class="modal-section-title">选择分类</div>
+    <div class="cat-selector" id="modal-cat-selector">
+      <div class="cat-option" data-cat="xingce" onclick="selectModalCat('xingce')">📘 行测</div>
+      <div class="cat-option" data-cat="shenlun" onclick="selectModalCat('shenlun')">📕 申论</div>
+    </div>
+    
+    <!-- 行测子模块选择 -->
+    <div id="xingce-modules-section">
+      <div class="modal-section-title">选择行测模块</div>
+      <div class="module-selector" id="module-selector">
+        <div class="module-option" data-module="zzll" onclick="selectModule('zzll')">
+          <span class="module-icon">🏛️</span>政治理论
+        </div>
+        <div class="module-option" data-module="yuyan" onclick="selectModule('yuyan')">
+          <span class="module-icon">💬</span>言语理解
+        </div>
+        <div class="module-option" data-module="shuliang" onclick="selectModule('shuliang')">
+          <span class="module-icon">🔢</span>数量关系
+        </div>
+        <div class="module-option" data-module="panduan" onclick="selectModule('panduan')">
+          <span class="module-icon">🧩</span>判断推理
+        </div>
+        <div class="module-option" data-module="ziliao" onclick="selectModule('ziliao')">
+          <span class="module-icon">📊</span>资料分析
+        </div>
+      </div>
+    </div>
+    
+    <button class="modal-btn" style="background:linear-gradient(135deg,#667eea,#764ba2);margin-top:16px;" onclick="confirmAddTask()">确认添加</button>
+    <button class="modal-close" onclick="closeAddModal()">取消</button>
+  </div>
+</div>
+
+<!-- 任务详情弹窗 -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal">
+    <h3 id="detail-modal-title">任务详情</h3>
+    <div id="detail-modal-content"></div>
+    <button class="modal-close" onclick="closeDetailModal()">关闭</button>
+  </div>
+</div>
+
+<script>
+// ========== 配置 ==========
+const STORAGE_KEY = 'ebbinghaus_app_v3';
+const REVIEW_NODES = [1, 2, 4, 7, 15, 30, 60];
+
+const CATEGORIES = {
+  xingce: { name: '行测', icon: '📘', color: '#007aff' },
+  shenlun: { name: '申论', icon: '📕', color: '#ff6b00' }
+};
+
+// 行测5个模块
+const XINGCE_MODULES = {
+  zzll:    { name: '政治理论', icon: '🏛️', color: '#e74c3c' },
+  yuyan:   { name: '言语理解', icon: '💬', color: '#3498db' },
+  shuliang:{ name: '数量关系', icon: '🔢', color: '#f39c12' },
+  panduan: { name: '判断推理', icon: '🧩', color: '#27ae60' },
+  ziliao:  { name: '资料分析', icon: '📊', color: '#9b59b6' }
+};
+
+let filterCat = 'all';
+let planCat = 'all';
+let selectedModalCat = 'xingce';
+let selectedModule = 'ziliao'; // 默认资料分析
+
+// ========== 数据管理 ==========
+function loadData() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    return d || { tasks: {} };
+  } catch(e) {
+    return { tasks: {} };
+  }
+}
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+let appData = loadData();
+
+// ========== 日期工具 ==========
+function dateKey(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function addDays(date, n) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+function todayKey() { return dateKey(new Date()); }
+
+// ========== 任务管理 ==========
+function showAddModal() {
+  document.getElementById('modal-task-input').value = '';
+  
+  // 跟随当前筛选
+  if (filterCat === 'xingce' || filterCat === 'shenlun') {
+    selectedModalCat = filterCat;
+  }
+  updateModalCatSelector();
+  updateModuleSelector();
+  
+  document.getElementById('add-modal').classList.add('show');
+  setTimeout(() => document.getElementById('modal-task-input').focus(), 100);
+}
+
+function closeAddModal() {
+  document.getElementById('add-modal').classList.remove('show');
+}
+
+function selectModalCat(cat) {
+  selectedModalCat = cat;
+  updateModalCatSelector();
+  updateModuleSelector();
+}
+
+function updateModalCatSelector() {
+  document.querySelectorAll('#modal-cat-selector .cat-option').forEach(el => {
+    const cat = el.dataset.cat;
+    el.className = 'cat-option';
+    if (cat === selectedModalCat) {
+      el.classList.add('selected-' + cat);
+    }
+  });
+}
+
+function selectModule(mod) {
+  selectedModule = mod;
+  updateModuleSelector();
+}
+
+function updateModuleSelector() {
+  const section = document.getElementById('xingce-modules-section');
+  if (selectedModalCat === 'xingce') {
+    section.style.display = 'block';
+    document.querySelectorAll('.module-option').forEach(el => {
+      el.classList.toggle('selected', el.dataset.module === selectedModule);
+    });
+  } else {
+    section.style.display = 'none';
+  }
+}
+
+function confirmAddTask() {
+  const input = document.getElementById('modal-task-input');
+  const title = input.value.trim();
+  if (!title) return;
+  
+  const tk = todayKey();
+  if (!appData.tasks[tk]) appData.tasks[tk] = [];
+  
+  const baseId = Date.now();
+  const moduleKey = selectedModalCat === 'xingce' ? selectedModule : null;
+  
+  const task = {
+    id: baseId,
+    title: title,
+    category: selectedModalCat,
+    module: moduleKey,
+    type: 'new',
+    node: 0,
+    done: false,
+    createdAt: tk
+  };
+  appData.tasks[tk].push(task);
+  
+  // 生成复习任务
+  REVIEW_NODES.forEach((node, idx) => {
+    const rk = dateKey(addDays(new Date(), node));
+    if (!appData.tasks[rk]) appData.tasks[rk] = [];
+    appData.tasks[rk].push({
+      id: baseId + idx + 1,
+      title: title,
+      category: selectedModalCat,
+      module: moduleKey,
+      type: 'review',
+      sourceDay: tk,
+      node: node,
+      done: false,
+      createdAt: tk
+    });
+  });
+  
+  saveData(appData);
+  closeAddModal();
+  renderToday();
+  renderStats();
+}
+
+function toggleTask(taskId, dk) {
+  const tasks = appData.tasks[dk] || [];
+  const t = tasks.find(x => x.id === taskId);
+  if (t) {
+    t.done = !t.done;
+    saveData(appData);
+    renderToday();
+    renderStats();
+  }
+}
+
+function deleteTask(taskId, dk) {
+  if (!confirm('确定删除此任务？关联的复习任务也会一起删除。')) return;
+  if (!appData.tasks[dk]) return;
+  const task = appData.tasks[dk].find(t => t.id === taskId);
+  if (!task) return;
+  
+  if (task.type === 'new') {
+    REVIEW_NODES.forEach(node => {
+      const rk = dateKey(addDays(new Date(task.createdAt), node));
+      if (appData.tasks[rk]) {
+        appData.tasks[rk] = appData.tasks[rk].filter(t => !(t.sourceDay === task.createdAt && t.title === task.title));
+      }
+    });
+  }
+  
+  appData.tasks[dk] = appData.tasks[dk].filter(t => t.id !== taskId);
+  saveData(appData);
+  closeDetailModal();
+  renderToday();
+  renderStats();
+}
+
+// ========== 分类筛选 ==========
+function setFilterCat(cat) {
+  filterCat = cat;
+  document.querySelectorAll('#cat-filter .cat-btn').forEach(btn => {
+    btn.className = 'cat-btn';
+    if (btn.dataset.cat === cat) btn.classList.add('active-' + (cat === 'all' ? 'all' : cat));
+  });
+  renderToday();
+}
+function setPlanCat(cat) {
+  planCat = cat;
+  document.querySelectorAll('#page-plan .cat-btn').forEach(btn => {
+    btn.className = 'cat-btn';
+    if (btn.dataset.cat === cat) btn.classList.add('active-' + (cat === 'all' ? 'all' : cat));
+  });
+  renderCalendar();
+}
+
+function filterByCat(tasks, cat) {
+  if (cat === 'all') return tasks;
+  return tasks.filter(t => t.category === cat);
+}
+
+// ========== 今日页渲染 ==========
+function nodeBadge(node) {
+  const map = {
+    0: ['badge-new', '新学'],
+    1: ['badge-review', '第1天'],
+    2: ['badge-review', '第2天'],
+    4: ['badge-d4', '第4天'],
+    7: ['badge-d7', '第7天'],
+    15: ['badge-d15', '第15天'],
+    30: ['badge-d30', '第30天'],
+    60: ['badge-d60', '第60天']
+  };
+  const [cls, txt] = map[node] || ['badge-review', '复习'];
+  return `<span class="badge ${cls}">${txt}</span>`;
+}
+
+function categoryBadge(cat) {
+  const c = CATEGORIES[cat];
+  if (!c) return '';
+  return `<span class="badge badge-cat-${cat}">${c.icon} ${c.name}</span>`;
+}
+
+function moduleBadge(mod) {
+  if (!mod) return '';
+  const m = XINGCE_MODULES[mod];
+  if (!m) return '';
+  return `<span class="badge badge-module-${mod}">${m.icon} ${m.name}</span>`;
+}
+
+function renderToday() {
+  const tk = todayKey();
+  let tasks = appData.tasks[tk] || [];
+  tasks = filterByCat(tasks, filterCat);
+  
+  const newTasks = tasks.filter(t => t.type === 'new');
+  const reviewTasks = tasks.filter(t => t.type === 'review').sort((a,b) => a.node - b.node);
+  
+  const total = tasks.length;
+  const done = tasks.filter(t => t.done).length;
+  const pct = total === 0 ? 0 : Math.round(done/total*100);
+  
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-percent').textContent = pct + '%';
+  document.getElementById('new-count-tag').textContent = newTasks.length + '项';
+  document.getElementById('review-count-tag').textContent = reviewTasks.length + '项';
+  
+  // 日期
+  const wd = ['周日','周一','周二','周三','周四','周五','周六'];
+  const today = new Date();
+  document.getElementById('today-date').textContent =
+    `${today.getMonth()+1}月${today.getDate()}日 ${wd[today.getDay()]}`;
+  
+  // 分类进度条
+  const allTasks = appData.tasks[tk] || [];
+  ['xingce', 'shenlun'].forEach(cat => {
+    const ct = allTasks.filter(t => t.category === cat);
+    const cDone = ct.filter(t => t.done).length;
+    const cPct = ct.length === 0 ? 0 : Math.round(cDone/ct.length*100);
+    document.getElementById(cat + '-percent').textContent = cPct + '%';
+    document.getElementById(cat + '-fill').style.width = cPct + '%';
+  });
+  
+  renderTaskList('new-tasks', newTasks, tk);
+  renderTaskList('review-tasks', reviewTasks, tk);
+}
+
+function renderTaskList(containerId, tasks, dk) {
+  const container = document.getElementById(containerId);
+  if (tasks.length === 0) {
+    const emptyText = containerId === 'new-tasks' ? '还没有新学习内容' : '暂无复习任务';
+    container.innerHTML = `<div class="empty"><div class="emoji">✨</div>${emptyText}</div>`;
+    return;
+  }
+  container.innerHTML = tasks.map(t => `
+    <div class="task-item ${t.done ? 'done' : ''}">
+      <div class="checkbox ${t.done ? 'done' : ''}" onclick="toggleTask(${t.id}, '${dk}')"></div>
+      <div class="task-content" onclick="showTaskDetail(${t.id}, '${dk}')">
+        <div class="task-title">${t.title}</div>
+        <div class="task-meta">
+          ${categoryBadge(t.category)}
+          ${t.module ? moduleBadge(t.module) : ''}
+          ${nodeBadge(t.node)}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showTaskDetail(taskId, dk) {
+  const tasks = appData.tasks[dk] || [];
+  const t = tasks.find(x => x.id === taskId);
+  if (!t) return;
+  
+  const catInfo = CATEGORIES[t.category] || {name: '未知', icon: '❓'};
+  let moduleInfo = '';
+  if (t.module && XINGCE_MODULES[t.module]) {
+    const m = XINGCE_MODULES[t.module];
+    moduleInfo = `<p style="font-size:13px;color:#666;margin-bottom:6px;">模块：${m.icon} ${m.name}</p>`;
+  }
+  
+  document.getElementById('detail-modal-title').textContent = '任务详情';
+  document.getElementById('detail-modal-content').innerHTML = `
+    <p style="margin-bottom:12px;font-size:16px;font-weight:500;">${t.title}</p>
+    <p style="font-size:13px;color:#666;margin-bottom:6px;">分类：${catInfo.icon} ${catInfo.name}</p>
+    ${moduleInfo}
+    <p style="font-size:13px;color:#666;margin-bottom:6px;">类型：${t.type === 'new' ? '新学习内容' : '复习（第'+t.node+'天）'}</p>
+    <p style="font-size:13px;color:#666;margin-bottom:6px;">创建日期：${t.createdAt}</p>
+    <p style="font-size:13px;color:#666;margin-bottom:12px;">状态：${t.done ? '✅ 已完成' : '⬜ 未完成'}</p>
+    <button class="modal-btn" style="background:#ff3b30;" onclick="deleteTask(${t.id}, '${dk}')">删除此任务</button>
+  `;
+  document.getElementById('detail-modal').classList.add('show');
+}
+function closeDetailModal() {
+  document.getElementById('detail-modal').classList.remove('show');
+}
+
+// ========== Tab切换 ==========
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  const idx = ['today','plan','stats','settings'].indexOf(tab);
+  document.querySelectorAll('.tab-item')[idx].classList.add('active');
+  
+  if (tab === 'plan') renderCalendar();
+  if (tab === 'stats') renderStats();
+}
+
+// ========== 计划页 - 日历 ==========
+let calMonth = new Date();
+calMonth.setDate(1);
+
+function changeMonth(delta) {
+  calMonth.setMonth(calMonth.getMonth() + delta);
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const y = calMonth.getFullYear();
+  const m = calMonth.getMonth();
+  document.getElementById('month-title').textContent = `${y}年${m+1}月`;
+  
+  const firstDay = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const weekdayNames = ['日','一','二','三','四','五','六'];
+  
+  let html = weekdayNames.map(n => `<div class="cal-day weekday">${n}</div>`).join('');
+  for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
+  
+  const tk = todayKey();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(y, m, d);
+    const dk = dateKey(date);
+    const isToday = dk === tk;
+    const isFuture = date > new Date();
+    
+    let tasks = appData.tasks[dk] || [];
+    tasks = filterByCat(tasks, planCat);
+    const hasXingce = tasks.some(t => t.category === 'xingce');
+    const hasShenlun = tasks.some(t => t.category === 'shenlun');
+    
+    let cls = 'cal-day';
+    if (isToday) cls += ' today';
+    if (isFuture && !isToday) cls += ' future';
+    
+    let dots = '';
+    if (hasXingce || hasShenlun) {
+      dots = '<div class="cat-dots">';
+      if (hasXingce) dots += '<div class="cat-dot dot-xingce"></div>';
+      if (hasShenlun) dots += '<div class="cat-dot dot-shenlun"></div>';
+      dots += '</div>';
+    }
+    
+    html += `<div class="${cls}" onclick="showDayDetail('${dk}')">${d}${dots}</div>`;
+  }
+  
+  document.getElementById('calendar').innerHTML = html;
+}
+
+function showDayDetail(dk) {
+  let tasks = appData.tasks[dk] || [];
+  tasks = filterByCat(tasks, planCat);
+  document.getElementById('detail-date').textContent = dk + ' · 共' + tasks.length + '项';
+  const section = document.getElementById('day-detail-section');
+  section.style.display = 'block';
+  
+  if (tasks.length === 0) {
+    document.getElementById('day-detail-content').innerHTML = '<div class="empty">这一天没有任务</div>';
+    return;
+  }
+  
+  let html = '';
+  
+  // 按分类分组
+  const byCat = { xingce: [], shenlun: [] };
+  tasks.forEach(t => { if (byCat[t.category]) byCat[t.category].push(t); });
+  
+  ['xingce', 'shenlun'].forEach(cat => {
+    const catTasks = byCat[cat];
+    if (!catTasks || catTasks.length === 0) return;
+    const info = CATEGORIES[cat];
+    html += `<div style="font-size:14px;color:${info.color};font-weight:600;margin:12px 0 6px;">${info.icon} ${info.name}（${catTasks.length}项）</div>`;
+    
+    // 行测再按模块分
+    if (cat === 'xingce') {
+      const byMod = {};
+      Object.keys(XINGCE_MODULES).forEach(k => byMod[k] = []);
+      byMod['_other'] = [];
+      catTasks.forEach(t => {
+        if (t.module && byMod[t.module]) byMod[t.module].push(t);
+        else byMod['_other'].push(t);
+      });
+      
+      Object.keys(XINGCE_MODULES).forEach(modKey => {
+        const modTasks = byMod[modKey];
+        if (modTasks.length === 0) return;
+        const m = XINGCE_MODULES[modKey];
+        html += `<div style="font-size:12px;color:${m.color};margin:8px 0 4px;padding-left:8px;">${m.icon} ${m.name}（${modTasks.length}）</div>`;
+        modTasks.sort((a,b) => a.node - b.node).forEach(t => {
+          html += taskItemHtml(t, dk);
+        });
+      });
+      
+      if (byMod['_other'].length > 0) {
+        html += `<div style="font-size:12px;color:#999;margin:8px 0 4px;padding-left:8px;">其他（${byMod['_other'].length}）</div>`;
+        byMod['_other'].sort((a,b) => a.node - b.node).forEach(t => {
+          html += taskItemHtml(t, dk);
+        });
+      }
+    } else {
+      catTasks.sort((a,b) => a.node - b.node).forEach(t => {
+        html += taskItemHtml(t, dk);
+      });
+    }
+  });
+  
+  document.getElementById('day-detail-content').innerHTML = html;
+}
+
+function taskItemHtml(t, dk) {
+  return `
+    <div class="task-item ${t.done ? 'done' : ''}" style="padding-left:16px;">
+      <div class="checkbox ${t.done ? 'done' : ''}" style="width:18px;height:18px;" onclick="toggleTask(${t.id}, '${dk}')"></div>
+      <div class="task-content" onclick="showTaskDetail(${t.id}, '${dk}')">
+        <div class="task-title" style="font-size:14px;">${t.title}</div>
+        <div class="task-meta">
+          ${t.module ? moduleBadge(t.module) : ''}
+          ${nodeBadge(t.node)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ========== 统计页 ==========
+function renderStats() {
+  let xingceLearned = 0, shenlunLearned = 0;
+  let xingceReview = 0, shenlunReview = 0;
+  const doneDaySet = new Set();
+  
+  // 模块统计
+  const moduleCounts = {};
+  Object.keys(XINGCE_MODULES).forEach(k => moduleCounts[k] = 0);
+  
+  for (const [dk, tasks] of Object.entries(appData.tasks)) {
+    const hasDone = tasks.some(t => t.done);
+    if (hasDone) doneDaySet.add(dk);
+    
+    tasks.forEach(t => {
+      if (t.category === 'xingce') {
+        if (t.type === 'new') {
+          xingceLearned++;
+          if (t.module && moduleCounts[t.module] !== undefined) {
+            moduleCounts[t.module]++;
+          }
+        } else {
+          xingceReview++;
+        }
+      } else if (t.category === 'shenlun') {
+        if (t.type === 'new') shenlunLearned++;
+        else shenlunReview++;
+      }
+    });
+  }
+  
+  document.getElementById('xingce-learned').textContent = xingceLearned;
+  document.getElementById('shenlun-learned').textContent = shenlunLearned;
+  document.getElementById('xingce-review').textContent = xingceReview;
+  document.getElementById('shenlun-review').textContent = shenlunReview;
+  document.getElementById('total-days').textContent = doneDaySet.size;
+  
+  // 连续天数
+  let streak = 0;
+  let checkDate = new Date();
+  while (true) {
+    const dk = dateKey(checkDate);
+    const tasks = appData.tasks[dk] || [];
+    if (tasks.some(t => t.done)) {
+      streak++;
+      checkDate = addDays(checkDate, -1);
+    } else break;
+  }
+  document.getElementById('streak-days').textContent = streak;
+  
+  // 模块统计柱状图
+  const maxMod = Math.max(...Object.values(moduleCounts), 1);
+  let modHtml = '';
+  Object.entries(XINGCE_MODULES).forEach(([key, m]) => {
+    const count = moduleCounts[key];
+    const pct = Math.round(count / maxMod * 100);
+    modHtml += `
+      <div class="module-stat-item">
+        <div class="module-stat-icon">${m.icon}</div>
+        <div class="module-stat-info">
+          <div class="module-stat-name">${m.name}</div>
+          <div class="module-stat-bar">
+            <div class="module-stat-fill" style="width:${pct}%;background:${m.color};"></div>
+          </div>
+        </div>
+        <div class="module-stat-count">${count}</div>
+      </div>
+    `;
+  });
+  document.getElementById('module-stats').innerHTML = modHtml;
+  
+  // 7天柱状图
+  const today = new Date();
+  let barHtml = '', labelHtml = '';
+  let maxVal = 1;
+  const dayData = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = addDays(today, -i);
+    const dk = dateKey(d);
+    const tasks = appData.tasks[dk] || [];
+    const xDone = tasks.filter(t => t.done && t.category === 'xingce').length;
+    const sDone = tasks.filter(t => t.done && t.category === 'shenlun').length;
+    dayData.push({ xDone, sDone });
+    maxVal = Math.max(maxVal, xDone + sDone);
+  }
+  
+  dayData.forEach(d => {
+    const xH = Math.max(2, Math.round(d.xDone / maxVal * 140));
+    const sH = Math.max(2, Math.round(d.sDone / maxVal * 140));
+    barHtml += `
+      <div class="bar">
+        <div class="bar-shenlun" style="height:${d.sDone>0?sH:0}px;"></div>
+        <div class="bar-xingce" style="height:${d.xDone>0?xH:0}px;"></div>
+      </div>
+    `;
+  });
+  
+  for (let i = 6; i >= 0; i--) {
+    const d = addDays(today, -i);
+    labelHtml += `<div>${d.getMonth()+1}/${d.getDate()}</div>`;
+  }
+  
+  document.getElementById('bar-chart').innerHTML = barHtml;
+  document.getElementById('bar-labels').innerHTML = labelHtml;
+}
+
+// ========== 设置 ==========
+function exportData() {
+  const dataStr = JSON.stringify(appData, null, 2);
+  const blob = new Blob([dataStr], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '艾宾浩斯复习数据_' + todayKey() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.tasks) throw new Error('格式不正确');
+      if (confirm('导入后将覆盖现有数据，确定继续？')) {
+        appData = data;
+        saveData(appData);
+        renderToday();
+        renderStats();
+        alert('导入成功！');
+      }
+    } catch(err) {
+      alert('导入失败：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function clearAllData() {
+  if (!confirm('确定清空所有数据？此操作不可恢复！')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  appData = { tasks: {} };
+  renderToday();
+  renderStats();
+  renderCalendar();
+  alert('已清空所有数据');
+}
+
+// ========== 初始化 ==========
+document.getElementById('setting-startdate').textContent = dateKey(new Date(2026, 10, 2));
+renderToday();
+
+// 弹窗点击外部关闭
+document.getElementById('add-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeAddModal();
+});
+document.getElementById('detail-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeDetailModal();
+});
+
+// 回车添加
+document.getElementById('modal-task-input').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') confirmAddTask();
+});
+</script>
+
+</body>
+</html>
